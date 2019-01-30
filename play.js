@@ -1,6 +1,8 @@
-var name = "Max";
-var age = 29;
-var hasHobbies = true;
+const name = "Max";
+let age = 29;
+const hasHobbies = true;
+// Do not never assign const constants
+age = 30;
 
 function summerizeUser(userName, userAge, userHasHobby) {
     return (
