@@ -9,6 +9,10 @@ const person = {
         console.log('Hi, I am ' + this.name)
     }
 };
+// Spread Operator. Pull out all elements from an array or properties from an object.
+const copiedPerson = {...person};
+console.log(copiedPerson);
+
 
 const hobbies = ['sports', 'cooking'];
 
@@ -21,5 +25,18 @@ const hobbies = ['sports', 'cooking'];
 // // original array
 // console.log(hobbies);
 
-hobbies.push('RPG');
-console.log(hobbies);
+// hobbies.push('RPG');
+// console.log(hobbies);
+
+// Spread Operator. Pull out all elements from an array or properties from an object.
+const copiedArray = [...hobbies];
+console.log(copiedArray);
+
+// Spread Operator will turn in Rest operator when
+// used to merge n elements in one array
+const toArray = (...args) => {
+    return args;
+};
+
+console.log(toArray(1, 2, 3));
+console.log(toArray(1, 2, 3, 4));
