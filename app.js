@@ -10,8 +10,10 @@ const http = require('http');
 // });
 
 // Anonymous function short tag
+// Keeps looping and listening requests
 const server = http.createServer((req, res) => {
     console.log(req);
+    // process.exit();
 });
 
 server.listen(3000);
