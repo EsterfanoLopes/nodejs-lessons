@@ -12,7 +12,7 @@ const http = require('http');
 // Anonymous function short tag
 // Keeps looping and listening requests
 const server = http.createServer((req, res) => {
-    console.log(req);
+    console.log(req.url, req.method, req.headers);
     // process.exit();
 });
 
