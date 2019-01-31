@@ -12,8 +12,15 @@ const http = require('http');
 // Anonymous function short tag
 // Keeps looping and listening requests
 const server = http.createServer((req, res) => {
-    console.log(req.url, req.method, req.headers);
-    // process.exit();
+    const url = req.url;
+    if (url === '/') {
+        res.write("<html>");
+        res.write("<head><title>Enter message</title></head>");
+        res.write("<body><form action='/message' method='post'><input type='text'/><button type='submit'>Send</button></form></body>");
+        res.write("</html>");
+        // return the anonymous function, without continue the code
+        return res.end();
+    }
 
     // Writing and sending back the Response
     res.setHeader('Content-Type', 'text/html');
