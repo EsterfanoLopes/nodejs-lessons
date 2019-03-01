@@ -4,6 +4,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 
 const app = express();
+// Engine we want to compile all views
+app.set('view engine', 'pug');
+// Folder to find views who will be rendered by the engine
+app.set('views', 'views');
 
 const adminData = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
