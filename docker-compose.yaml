@@ -1,0 +1,15 @@
+version: '2'
+services:
+    node:
+        ports:
+            - 3000:3000
+        image: node:11.10-alpine
+        container_name: udemy_nodecourse
+        working_dir: /home/node/app
+        environment:
+            - NODE_ENV=dev
+        volumes:
+            - ./:/home/node/app
+        expose: 
+            - "3000"
+        command: "npm start"
