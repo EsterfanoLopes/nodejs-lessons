@@ -10,6 +10,11 @@ router.get('/', shopController.getIndex);
 
 router.get('/products', shopController.getProducts);
 
+router.get('/products/:productId', shopController.getProduct);
+
+// Order metters! This route delete will neve be reached because the dynamic route above
+// router.get('/products/delete');
+
 router.get('/cart', shopController.getCart);
 
 router.get('/orders', shopController.getOrders);
