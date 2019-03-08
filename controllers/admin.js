@@ -18,6 +18,15 @@ exports.postAddProduct = (req, res, next) => {
   res.redirect('/');
 };
 
+exports.postDeleteProduct = (req, res, next) => {
+  const prodId = req.body.productId;
+
+  Product.delete(prodId, product => {
+    product.deleteById(prodId);
+    return res.redirect('/admin/products');
+  });
+}
+
 exports.getEditProduct = (req, res, next) => {
   const editMode = req.query.edit;
   if (!editMode) {
@@ -50,7 +59,8 @@ exports.postEditProduct = (req, res, next) => {
     prodId, 
     updatedTitle, 
     updatedImageUrl, 
-    updatedDescription
+    updatedDescription,
+    updatedPrice
   );
   updatedProduct.save();
   res.redirect('/admin/products');

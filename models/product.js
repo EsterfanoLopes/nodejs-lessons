@@ -49,6 +49,26 @@ module.exports = class Product {
     });
   }
 
+  static deleteById(prodId) {
+    getProductsFromFile(products => {
+      if (prodId) {
+        // Updating a product
+        const updatedProducts = products.filter(
+          prod => prod.id !== prodId
+        );
+        fs.writeFile(p, JSON.stringify(updatedProducts), err => {
+          if (!err) {
+            // Delete from the cart
+          }
+          console.log(err);
+        });
+      } else {
+        // Error. Product not found
+        console.log('Product not found. Please check the');
+      }
+    });
+  }
+
   static fetchAll(cb) {
     getProductsFromFile(cb);
   }
