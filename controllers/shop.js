@@ -13,15 +13,26 @@ exports.getProducts = (req, res, next) => {
 
 exports.getProduct = (req, res, next) => {
   const prodId = req.params.productId;
-  console.log(Product.finById(prodId)
-    .then(([product]) => {
-      res.render('shop/product-detail', { 
-        product: product[0], 
-        pageTitle: product.title, 
-        path: '/products'
-      })
-    }).catch(err => console.log(err))
-  );
+  // Using findAll with where clausure
+  // Product.findAll({where: {
+  //   id: prodId
+  // }}).then(products => {
+  //   res.render('shop/product-detail', { 
+  //     product: products[0], 
+  //     pageTitle: products[0].title, 
+  //     path: '/products'
+  //   })
+  // }).catch(err => console.log(err));
+  // Using find by pk
+  Product.findByPk(prodId)
+  .then((product) => {
+    res.render('shop/product-detail', { 
+      product: product, 
+      pageTitle: product.title, 
+      path: '/products'
+    })
+  }).catch(err => console.log(err))
+  
 }
 
 exports.getIndex = (req, res, next) => {
