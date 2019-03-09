@@ -18,6 +18,8 @@ services:
     db:
         image: mysql:8
         container_name: udemy_mysql_nodecourse
+        ports:
+            - 3306:3306
         command: --default-authentication-plugin=mysql_native_password
         environment:
             MYSQL_ROOT_PASSWORD: root
