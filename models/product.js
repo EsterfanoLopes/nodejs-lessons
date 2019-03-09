@@ -13,21 +13,19 @@ class Product {
   save() {
     const db = getDb();
     let dbOp;
-    if (this_id) {
+    if (this._id) {
       // Update the product
       dbOp = db
         .collection('products')
-        .updateOne({ _id: mongodb.ObjectId(this._id) }, { $set:  this });
+        .updateOne({ _id: new mongodb.ObjectId(this._id) }, { $set:  this });
     } else {
       // Insert a new one
       dbOp = db
-      .collection('products')
-      .insertOne(this);
+        .collection('products')
+        .insertOne(this);
     }
     return dbOp
-      .then(result => {
-        console.log(result)
-      })
+      .then(result => console.log('Operation executed'))
       .catch(err => console.log(err));
   }
 
