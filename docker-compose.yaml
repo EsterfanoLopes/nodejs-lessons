@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 services:
     node:
         ports:
@@ -13,3 +13,14 @@ services:
         expose: 
             - "3000"
         command: "npm start"
+        depends_on:
+            - db
+    db:
+        image: mysql:8
+        container_name: udemy_mysql_nodecourse
+        ports:
+            - 3306:3306
+        command: --default-authentication-plugin=mysql_native_password
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: node_complete
