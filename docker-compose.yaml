@@ -3,6 +3,7 @@ services:
     node:
         ports:
             - 3000:3000
+            - 9222:9222
         image: node:11.10-alpine
         container_name: udemy_nodecourse
         working_dir: /home/node/app
@@ -12,6 +13,7 @@ services:
             - ./:/home/node/app
         expose: 
             - "3000"
+            - "9222"
         command: "npm start"
     #     depends_on:
     #         - db
