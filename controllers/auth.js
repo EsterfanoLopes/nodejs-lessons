@@ -43,18 +43,19 @@ exports.postSignup = (req, res, next) => {
       if (userDoc) {
         return res.redirect('/signup');
       }
-      return bcrypt.hash(password, parseInt(`${process.env.ENCRYPT_ROUNDS}`, 10));
-    })
-    .then(encryptedPassword => {
-      const user = new User({ 
-        email,
-        password: encryptedPassword,
-        cart: { items: [] },
-      });
-      return user.save();
-    })
-    .then(result => {
-      res.redirect('/login')
+      return bcrypt
+        .hash(password, parseInt(`${process.env.ENCRYPT_ROUNDS}`, 10))
+        .then(encryptedPassword => {
+          const user = new User({
+            email,
+            password: encryptedPassword,
+            cart: { items: [] },
+          });
+          return user.save();
+        })
+        .then(result => {
+          res.redirect('/login')
+        });
     })
     .catch(err => console.log(err));
 };
