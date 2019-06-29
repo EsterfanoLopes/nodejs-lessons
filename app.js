@@ -14,7 +14,7 @@ dotenv.config();
 const envvars = process.env;
 
 const MONGODB_URI =
-  `mongodb://${envvars.DB_USER}:${envvars.DB_PASSWORD}@${envvars.DB_HOST}:${envvars.DB_PORT}/${envvars.DB_NAME}`;
+`mongodb://${envvars.DB_USER}:${envvars.DB_PASSWORD}@${envvars.DB_HOST}:${envvars.DB_PORT}/${envvars.DB_NAME}`;
 
 const app = express();
 const store = new MongoDBStore({
@@ -39,18 +39,6 @@ app.use(
     store: store
   })
 );
-
-app.use((req, res, next) => {
-  if (!req.session.user) {
-    return next();
-  }
-  User.findById(req.session.user._id)
-    .then(user => {
-      req.user = user;
-      next();
-    })
-    .catch(err => console.log(err));
-})
 
 app.use((req, res, next) => {
   if (!req.session.user) {

@@ -58,7 +58,7 @@ exports.postSignup = (req, res, next) => {
         return res.redirect('/signup');
       }
       return bcrypt
-        .hash(password, parseInt(`${process.env.ENCRYPT_ROUNDS}`, 10))
+      .hash(password, parseInt(`${process.env.ENCRYPT_ROUNDS}`, 10))
         .then(encryptedPassword => {
           const user = new User({
             email,
