@@ -1,5 +1,6 @@
 const path = require('path');
 
+const dotenv = require('dotenv');
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -9,8 +10,11 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 const errorController = require('./controllers/error');
 const User = require('./models/user');
 
+dotenv.config();
+const envvars = process.env;
+
 const MONGODB_URI =
-  'mongodb+srv://nodelessons:nodelessons@node-lessons-wdsqh.mongodb.net/shop';
+  `mongodb://${envvars.DB_USER}:${envvars.DB_PASSWORD}@${envvars.DB_HOST}:${envvars.DB_PORT}/${envvars.DB_NAME}`;
 
 const app = express();
 const store = new MongoDBStore({
