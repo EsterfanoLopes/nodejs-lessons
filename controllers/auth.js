@@ -1,4 +1,9 @@
+const bcrypt = require('bcryptjs');
+const dotenv = require('dotenv');
+
 const User = require('../models/user');
+
+dotenv.config();
 
 exports.getLogin = (req, res, next) => {
   res.render('auth/login', {
@@ -38,10 +43,12 @@ exports.postSignup = (req, res, next) => {
       if (userDoc) {
         return res.redirect('/signup');
       }
-
+      return bcrypt.hash(password, parseInt(`${process.env.ENCRYPT_ROUNDS}`, 10));
+    })
+    .then(encryptedPassword => {
       const user = new User({ 
-        email, 
-        password,
+        email,
+        password: encryptedPassword,
         cart: { items: [] },
       });
       return user.save();
