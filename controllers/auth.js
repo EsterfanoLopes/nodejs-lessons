@@ -1,9 +1,17 @@
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
+const nodemailer = require('nodemailer');
+const sendgridTransport = require('nodemailer-sendgrid-transport');
 
 const User = require('../models/user');
 
 dotenv.config();
+
+const transporter = nodemailer.createTransport(
+  sendgridTransport({
+    auth: { api_key: `${process.env.EMAIL_API_KEY}` },
+  })
+);
 
 exports.getLogin = (req, res, next) => {
   let message = req.flash('error');
@@ -75,7 +83,7 @@ exports.postSignup = (req, res, next) => {
         return res.redirect('/signup');
       }
       return bcrypt
-      .hash(password, parseInt(`${process.env.ENCRYPT_ROUNDS}`, 10))
+        .hash(password, parseInt(`${process.env.ENCRYPT_ROUNDS}`, 10))
         .then(hashedPassword => {
           const user = new User({
             email: email,
@@ -86,7 +94,15 @@ exports.postSignup = (req, res, next) => {
         })
         .then(result => {
           res.redirect('/login');
-        });
+          return transporter.sendMail({
+            to: email,
+            from: 'shop@node-complete.com',
+            subject: 'Signup Succeded',
+            html: '<h1>Congratz</h1>'
+          });
+        })
+        .then(result => console.log(result))
+        .catch(err => console.log(err));
     })
     .catch(err => {
       console.log(err);
