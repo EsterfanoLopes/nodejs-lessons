@@ -45,6 +45,7 @@ exports.getSignup = (req, res, next) => {
       email: "",
       password: "",
       confirmPassword: "",
+      validationErrors: [],
     },
   });
 };
@@ -105,6 +106,7 @@ exports.postSignup = (req, res, next) => {
         password,
         confirmPassword: req.body.confirmPassword,
       },
+      validationErrors: errors,
     });
   }
 
