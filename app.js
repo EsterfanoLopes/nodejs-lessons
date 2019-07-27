@@ -10,6 +10,8 @@ const csrf = require('csurf');
 const flash = require('connect-flash');
 
 const errorController = require('./controllers/error');
+const errorHandlerObjectWrapper = require('./util/errorHandlerObjectWrapper');
+
 const User = require('./models/user');
 
 dotenv.config();
@@ -58,7 +60,7 @@ app.use((req, res, next) => {
       next();
     })
     .catch(err => {
-      throw new Error(err);
+      next(errorHandlerObjectWrapper(500, err));
     });
 });
 
