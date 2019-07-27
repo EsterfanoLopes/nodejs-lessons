@@ -1,5 +1,7 @@
 const { validationResult } = require('express-validator/check')
 
+const errorHandlerObjectWrapper = require('../util/errorHandlerObjectWrapper');
+
 const Product = require('../models/product');
 
 exports.getAddProduct = (req, res, next) => {
@@ -47,7 +49,17 @@ exports.postAddProduct = (req, res, next) => {
       res.redirect('/admin/products');
     })
     .catch(err => {
-      console.log(err);
+      // return res.status(500).render('admin/edit-product', {
+      //   pageTitle: 'Add Product',
+      //   path: '/admin/add-product',
+      //   editing: false,
+      //   product: { title, imageUrl, price, description },
+      //   hasError: true,
+      //   errorMessage: 'Database operation failed.',
+      //   validationErrors: [],
+      // });
+      // res.redirect('/500');
+      return errorHandlerObjectWrapper(500, err);
     });
 };
 
@@ -72,7 +84,7 @@ exports.getEditProduct = (req, res, next) => {
         validationErrors: [],
       });
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };
 
 exports.postEditProduct = (req, res, next) => {
@@ -116,7 +128,7 @@ exports.postEditProduct = (req, res, next) => {
           res.redirect('/admin/products');
         });
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };
 
 exports.getProducts = (req, res, next) => {
@@ -131,7 +143,7 @@ exports.getProducts = (req, res, next) => {
         path: '/admin/products'
       });
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };
 
 exports.postDeleteProduct = (req, res, next) => {
@@ -144,5 +156,5 @@ exports.postDeleteProduct = (req, res, next) => {
       console.log('DESTROYED PRODUCT');
       res.redirect('/admin/products');
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };
