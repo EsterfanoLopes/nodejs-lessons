@@ -1,5 +1,7 @@
 const { validationResult } = require('express-validator/check')
 
+const errorHandlerObjectWrapper = require('../util/errorHandlerObjectWrapper');
+
 const Product = require('../models/product');
 
 exports.getAddProduct = (req, res, next) => {
@@ -16,7 +18,7 @@ exports.getAddProduct = (req, res, next) => {
 exports.postAddProduct = (req, res, next) => {
   const title = req.body.title;
   const imageUrl = req.body.imageUrl;
-  const price = 'req.body.price';
+  const price = req.body.price;
   const description = req.body.description;
   const { errors } = validationResult(req);
 
@@ -57,9 +59,7 @@ exports.postAddProduct = (req, res, next) => {
       //   validationErrors: [],
       // });
       // res.redirect('/500');
-      const error = new Error(err);
-      error.httpStatusCode = 500;
-      return next(error);
+      return errorHandlerObjectWrapper(500, err);
     });
 };
 
@@ -84,7 +84,7 @@ exports.getEditProduct = (req, res, next) => {
         validationErrors: [],
       });
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };
 
 exports.postEditProduct = (req, res, next) => {
@@ -128,7 +128,7 @@ exports.postEditProduct = (req, res, next) => {
           res.redirect('/admin/products');
         });
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };
 
 exports.getProducts = (req, res, next) => {
@@ -143,7 +143,7 @@ exports.getProducts = (req, res, next) => {
         path: '/admin/products'
       });
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };
 
 exports.postDeleteProduct = (req, res, next) => {
@@ -156,5 +156,5 @@ exports.postDeleteProduct = (req, res, next) => {
       console.log('DESTROYED PRODUCT');
       res.redirect('/admin/products');
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };

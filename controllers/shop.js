@@ -1,3 +1,5 @@
+const errorHandlerObjectWrapper = require('../util/errorHandlerObjectWrapper');
+
 const Product = require('../models/product');
 const Order = require('../models/order');
 
@@ -11,9 +13,7 @@ exports.getProducts = (req, res, next) => {
         path: '/products'
       });
     })
-    .catch(err => {
-      console.log(err);
-    });
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };
 
 exports.getProduct = (req, res, next) => {
@@ -38,9 +38,7 @@ exports.getIndex = (req, res, next) => {
         path: '/'
       });
     })
-    .catch(err => {
-      console.log(err);
-    });
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };
 
 exports.getCart = (req, res, next) => {

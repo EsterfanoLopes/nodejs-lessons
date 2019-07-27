@@ -6,6 +6,8 @@ const nodemailer = require('nodemailer');
 const sendgridTransport = require('nodemailer-sendgrid-transport');
 const { validationResult } = require('express-validator/check');
 
+const errorHandlerObjectWrapper = require('../util/errorHandlerObjectWrapper');
+
 const User = require('../models/user');
 
 dotenv.config();
@@ -147,7 +149,7 @@ exports.postSignup = (req, res, next) => {
       });
     })
     .then(result => console.log(result))
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };
 
 exports.postLogout = (req, res, next) => {
@@ -201,7 +203,7 @@ exports.postReset = (req, res, next) => {
         `
         });
       })
-      .catch(err => console.log(err));
+      .catch(err => errorHandlerObjectWrapper(500, err));
   })
 };
 
@@ -227,7 +229,7 @@ exports.getNewPassword = (req, res, next) => {
         passwordToken: token,
       });
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };
 
 exports.postNewPassword = (req, res, next) => {
@@ -254,5 +256,5 @@ exports.postNewPassword = (req, res, next) => {
     .then(result => {
       res.redirect('/login');
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };
