@@ -149,7 +149,7 @@ exports.postSignup = (req, res, next) => {
       });
     })
     .then(result => console.log(result))
-    .catch(err => errorHandlerObjectWrapper(500, err));
+    .catch(err => errorHandlerObjectWrapper(500, err, next));
 };
 
 exports.postLogout = (req, res, next) => {
@@ -203,7 +203,7 @@ exports.postReset = (req, res, next) => {
         `
         });
       })
-      .catch(err => errorHandlerObjectWrapper(500, err));
+      .catch(err => errorHandlerObjectWrapper(500, err, next));
   })
 };
 
@@ -229,7 +229,7 @@ exports.getNewPassword = (req, res, next) => {
         passwordToken: token,
       });
     })
-    .catch(err => errorHandlerObjectWrapper(500, err));
+    .catch(err => errorHandlerObjectWrapper(500, err, next));
 };
 
 exports.postNewPassword = (req, res, next) => {
@@ -256,5 +256,5 @@ exports.postNewPassword = (req, res, next) => {
     .then(result => {
       res.redirect('/login');
     })
-    .catch(err => errorHandlerObjectWrapper(500, err));
+    .catch(err => errorHandlerObjectWrapper(500, err, next));
 };

@@ -13,7 +13,7 @@ exports.getProducts = (req, res, next) => {
         path: '/products'
       });
     })
-    .catch(err => errorHandlerObjectWrapper(500, err));
+    .catch(err => errorHandlerObjectWrapper(500, err, next));
 };
 
 exports.getProduct = (req, res, next) => {
@@ -38,7 +38,7 @@ exports.getIndex = (req, res, next) => {
         path: '/'
       });
     })
-    .catch(err => errorHandlerObjectWrapper(500, err));
+    .catch(err => errorHandlerObjectWrapper(500, err, next));
 };
 
 exports.getCart = (req, res, next) => {
