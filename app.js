@@ -19,7 +19,7 @@ dotenv.config();
 const envvars = process.env;
 
 const MONGODB_URI =
-`mongodb://${envvars.DB_USER}:${envvars.DB_PASSWORD}@${envvars.DB_HOST}:${envvars.DB_PORT}/${envvars.DB_NAME}`;
+  `mongodb://${envvars.DB_USER}:${envvars.DB_PASSWORD}@${envvars.DB_HOST}:${envvars.DB_PORT}/${envvars.DB_NAME}`;
 
 const app = express();
 const store = new MongoDBStore({
@@ -37,6 +37,17 @@ const fileStorage = multer.diskStorage({
   },
 });
 
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === 'image/png' ||
+    file.mimetype === 'image/jpg' ||
+    file.mimetype === 'image/jpeg'
+  ) {
+    cb(null, true);
+  }
+  cb(null, false);
+}
+
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 
@@ -45,7 +56,7 @@ const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
 
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(multer({ storage: fileStorage }).single('image'));
+app.use(multer({ storage: fileStorage, fileFilter }).single('image'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(
   session({
