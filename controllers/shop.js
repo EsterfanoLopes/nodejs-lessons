@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+
 const errorHandlerObjectWrapper = require('../util/errorHandlerObjectWrapper');
 
 const Product = require('../models/product');
@@ -115,4 +118,17 @@ exports.getOrders = (req, res, next) => {
       });
     })
     .catch(err => errorHandlerObjectWrapper(500, err, next));
+};
+
+exports.getInvoice = (req, res, next) => {
+  const orderId = req.params.orderId;
+  const invoiceName = 'invoice-' + orderId + '.pdf';
+  const invoicePath = path.join('data', 'invoices', invoiceName);
+  fs.readFile(invoicePath, (err, data) => {
+    if (err) {
+      return next(err);
+    }
+    res.send(data);
+  });
+
 };
