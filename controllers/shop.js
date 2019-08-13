@@ -128,6 +128,8 @@ exports.getInvoice = (req, res, next) => {
     if (err) {
       return next(err);
     }
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="' + invoiceName + '"');
     res.send(data);
   });
 
