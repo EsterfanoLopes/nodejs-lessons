@@ -1,4 +1,8 @@
+const fs = require('fs');
+const path = require('path');
+
 const errorHandlerObjectWrapper = require('../util/errorHandlerObjectWrapper');
+const PDFDocument = require('pdfkit');
 
 const Product = require('../models/product');
 const Order = require('../models/order');
@@ -26,7 +30,7 @@ exports.getProduct = (req, res, next) => {
         path: '/products'
       });
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err, next));
 };
 
 exports.getIndex = (req, res, next) => {
@@ -53,7 +57,7 @@ exports.getCart = (req, res, next) => {
         products: products
       });
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err, next));
 };
 
 exports.postCart = (req, res, next) => {
@@ -65,7 +69,8 @@ exports.postCart = (req, res, next) => {
     .then(result => {
       console.log(result);
       res.redirect('/cart');
-    });
+    })
+    .catch(err => errorHandlerObjectWrapper(500, err, next));
 };
 
 exports.postCartDeleteProduct = (req, res, next) => {
@@ -75,7 +80,7 @@ exports.postCartDeleteProduct = (req, res, next) => {
     .then(result => {
       res.redirect('/cart');
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err, next));
 };
 
 exports.postOrder = (req, res, next) => {
@@ -101,7 +106,7 @@ exports.postOrder = (req, res, next) => {
     .then(() => {
       res.redirect('/orders');
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err, next));
 };
 
 exports.getOrders = (req, res, next) => {
@@ -113,5 +118,54 @@ exports.getOrders = (req, res, next) => {
         orders: orders
       });
     })
-    .catch(err => console.log(err));
+    .catch(err => errorHandlerObjectWrapper(500, err, next));
+};
+
+exports.getInvoice = (req, res, next) => {
+  const orderId = req.params.orderId;
+  Order.findById(orderId).then(order => {
+    if (!order) {
+      return next(new Error('No order found.'));
+    }
+    if (order.user.userId.toString() !== req.user._id.toString()) {
+      return next(new Error('Unauthorized'));
+    }
+    const invoiceName = 'invoice-' + orderId + '.pdf';
+    const invoicePath = path.join('data', 'invoices', invoiceName);
+
+    const pdfDoc = new PDFDocument();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="' + invoiceName + '"');
+    pdfDoc.pipe(fs.createWriteStream(invoicePath));
+    pdfDoc.pipe(res);
+
+    pdfDoc.fontSize(26).text('Invoice', { underline: true });
+    pdfDoc.text('----------------------------------');
+    let totalprice = 0;
+    order.products.forEach(prod => {
+      totalprice = totalprice + prod.quantity * prod.product.price;
+      pdfDoc.fontSize(14).text(
+        prod.product.title +
+        ' - ' +
+        prod.quantity +
+        ' x ' +
+        '$' +
+        prod.product.price
+      );
+    });
+    pdfDoc.text('-----');
+    pdfDoc.fontSize(20).text('Total Price: $' + totalprice);
+
+    pdfDoc.end();
+    // fs.readFile(invoicePath, (err, data) => {
+    //   if (err) {
+    //     return next(err);
+    //   }
+    //   res.setHeader('Content-Type', 'application/pdf');
+    //   res.setHeader('Content-Disposition', 'attachment; filename="' + invoiceName + '"');
+    //   res.send(data);
+    // });
+    // const file = fs.createReadStream(invoicePath);
+    // file.pipe(res);
+  }).catch(err => next(err));
 };
