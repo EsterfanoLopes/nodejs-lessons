@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
+const stripe = require('stripe')('sk_test_QHNKaxhuqvrUlkLFzsszVhcI00TJgtcdhO');
 
 const errorHandlerObjectWrapper = require('../util/errorHandlerObjectWrapper');
 const PDFDocument = require('pdfkit');
@@ -118,10 +119,16 @@ exports.postCartDeleteProduct = (req, res, next) => {
 };
 
 exports.postOrder = (req, res, next) => {
+  const token = req.body.stripeToken;
+  let totalSum = 0;
+
   req.user
-    .populate('cart.items.productId')
+    .populate("cart.items.productId")
     .execPopulate()
     .then(user => {
+      user.cart.items.forEach(p => {
+        totalSum += p.quantity * p.productId.price;
+      });
       const products = user.cart.items.map(i => {
         return { quantity: i.quantity, product: { ...i.productId._doc } };
       });
@@ -135,10 +142,17 @@ exports.postOrder = (req, res, next) => {
       return order.save();
     })
     .then(result => {
+      const charge = stripe.charges.create({
+        amount: totalSum,
+        currency: "usd",
+        description: "Demo Order",
+        source: token,
+        metadata: { order_id: result._id.toString() }
+      });
       return req.user.clearCart();
     })
     .then(() => {
-      res.redirect('/orders');
+      res.redirect("/orders");
     })
     .catch(err => errorHandlerObjectWrapper(500, err, next));
 };
