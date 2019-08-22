@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const dotenv = require('dotenv');
 
 const errorHandlerObjectWrapper = require('../util/errorHandlerObjectWrapper');
 const PDFDocument = require('pdfkit');
@@ -7,7 +8,9 @@ const PDFDocument = require('pdfkit');
 const Product = require('../models/product');
 const Order = require('../models/order');
 
-const ITEMS_PER_PAGE = 2;
+dotenv.config();
+const envvars = process.env;
+const ITEMS_PER_PAGE = +envvars.ITEMS_PER_PAGE;
 
 exports.getProducts = (req, res, next) => {
   const page = +req.query.page || 1;
