@@ -2,3 +2,6 @@ node_modules
 .env
 images
 data/invoices
+log
+server.cert
+server.key

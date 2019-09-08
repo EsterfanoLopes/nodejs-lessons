@@ -1,17 +1,17 @@
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
-const stripe = require('stripe')('sk_test_QHNKaxhuqvrUlkLFzsszVhcI00TJgtcdhO');
 
-const errorHandlerObjectWrapper = require('../util/errorHandlerObjectWrapper');
 const PDFDocument = require('pdfkit');
+
+dotenv.config();
+
+const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 const Product = require('../models/product');
 const Order = require('../models/order');
 
-dotenv.config();
-const envvars = process.env;
-const ITEMS_PER_PAGE = +envvars.ITEMS_PER_PAGE;
+const ITEMS_PER_PAGE = process.env.ITEMS_PER_PAGE;
 
 exports.getProducts = (req, res, next) => {
   const page = +req.query.page || 1;
@@ -22,9 +22,10 @@ exports.getProducts = (req, res, next) => {
     .then(numProducts => {
       totalItems = numProducts;
       return Product.find()
-        .skip((page - 1) * parseInt(ITEMS_PER_PAGE))
+        .skip((page - 1) * ITEMS_PER_PAGE)
         .limit(ITEMS_PER_PAGE);
-    }).then(products => {
+    })
+    .then(products => {
       res.render('shop/product-list', {
         prods: products,
         pageTitle: 'Products',
@@ -34,10 +35,14 @@ exports.getProducts = (req, res, next) => {
         hasPreviousPage: page > 1,
         nextPage: page + 1,
         previousPage: page - 1,
-        lastPage: Math.ceil(totalItems / ITEMS_PER_PAGE),
+        lastPage: Math.ceil(totalItems / ITEMS_PER_PAGE)
       });
     })
-    .catch(err => errorHandlerObjectWrapper(500, err, next));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.getProduct = (req, res, next) => {
@@ -50,7 +55,11 @@ exports.getProduct = (req, res, next) => {
         path: '/products'
       });
     })
-    .catch(err => errorHandlerObjectWrapper(500, err, next));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.getIndex = (req, res, next) => {
@@ -62,9 +71,10 @@ exports.getIndex = (req, res, next) => {
     .then(numProducts => {
       totalItems = numProducts;
       return Product.find()
-        .skip((page - 1) * parseInt(ITEMS_PER_PAGE))
+        .skip((page - 1) * ITEMS_PER_PAGE)
         .limit(ITEMS_PER_PAGE);
-    }).then(products => {
+    })
+    .then(products => {
       res.render('shop/index', {
         prods: products,
         pageTitle: 'Shop',
@@ -74,10 +84,14 @@ exports.getIndex = (req, res, next) => {
         hasPreviousPage: page > 1,
         nextPage: page + 1,
         previousPage: page - 1,
-        lastPage: Math.ceil(totalItems / ITEMS_PER_PAGE),
+        lastPage: Math.ceil(totalItems / ITEMS_PER_PAGE)
       });
     })
-    .catch(err => errorHandlerObjectWrapper(500, err, next));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.getCart = (req, res, next) => {
@@ -92,7 +106,11 @@ exports.getCart = (req, res, next) => {
         products: products
       });
     })
-    .catch(err => errorHandlerObjectWrapper(500, err, next));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.postCart = (req, res, next) => {
@@ -105,7 +123,11 @@ exports.postCart = (req, res, next) => {
       console.log(result);
       res.redirect('/cart');
     })
-    .catch(err => errorHandlerObjectWrapper(500, err, next));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.postCartDeleteProduct = (req, res, next) => {
@@ -115,20 +137,51 @@ exports.postCartDeleteProduct = (req, res, next) => {
     .then(result => {
       res.redirect('/cart');
     })
-    .catch(err => errorHandlerObjectWrapper(500, err, next));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
+};
+
+exports.getCheckout = (req, res, next) => {
+  req.user
+    .populate('cart.items.productId')
+    .execPopulate()
+    .then(user => {
+      const products = user.cart.items;
+      let total = 0;
+      products.forEach(p => {
+        total += p.quantity * p.productId.price;
+      });
+      res.render('shop/checkout', {
+        path: '/checkout',
+        pageTitle: 'Checkout',
+        products: products,
+        totalSum: total
+      });
+    })
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.postOrder = (req, res, next) => {
-  const token = req.body.stripeToken;
+  // Token is created using Checkout or Elements!
+  // Get the payment token ID submitted by the form:
+  const token = req.body.stripeToken; // Using Express
   let totalSum = 0;
 
   req.user
-    .populate("cart.items.productId")
+    .populate('cart.items.productId')
     .execPopulate()
-    .then(user => {
+    .then(user => {  
       user.cart.items.forEach(p => {
         totalSum += p.quantity * p.productId.price;
       });
+
       const products = user.cart.items.map(i => {
         return { quantity: i.quantity, product: { ...i.productId._doc } };
       });
@@ -143,18 +196,22 @@ exports.postOrder = (req, res, next) => {
     })
     .then(result => {
       const charge = stripe.charges.create({
-        amount: totalSum,
-        currency: "usd",
-        description: "Demo Order",
+        amount: totalSum * 100,
+        currency: 'usd',
+        description: 'Demo Order',
         source: token,
         metadata: { order_id: result._id.toString() }
       });
       return req.user.clearCart();
     })
     .then(() => {
-      res.redirect("/orders");
+      res.redirect('/orders');
     })
-    .catch(err => errorHandlerObjectWrapper(500, err, next));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.getOrders = (req, res, next) => {
@@ -166,74 +223,71 @@ exports.getOrders = (req, res, next) => {
         orders: orders
       });
     })
-    .catch(err => errorHandlerObjectWrapper(500, err, next));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.getInvoice = (req, res, next) => {
   const orderId = req.params.orderId;
-  Order.findById(orderId).then(order => {
-    if (!order) {
-      return next(new Error('No order found.'));
-    }
-    if (order.user.userId.toString() !== req.user._id.toString()) {
-      return next(new Error('Unauthorized'));
-    }
-    const invoiceName = 'invoice-' + orderId + '.pdf';
-    const invoicePath = path.join('data', 'invoices', invoiceName);
+  Order.findById(orderId)
+    .then(order => {
+      if (!order) {
+        return next(new Error('No order found.'));
+      }
+      if (order.user.userId.toString() !== req.user._id.toString()) {
+        return next(new Error('Unauthorized'));
+      }
+      const invoiceName = 'invoice-' + orderId + '.pdf';
+      const invoicePath = path.join('data', 'invoices', invoiceName);
 
-    const pdfDoc = new PDFDocument();
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="' + invoiceName + '"');
-    pdfDoc.pipe(fs.createWriteStream(invoicePath));
-    pdfDoc.pipe(res);
-
-    pdfDoc.fontSize(26).text('Invoice', { underline: true });
-    pdfDoc.text('----------------------------------');
-    let totalprice = 0;
-    order.products.forEach(prod => {
-      totalprice = totalprice + prod.quantity * prod.product.price;
-      pdfDoc.fontSize(14).text(
-        prod.product.title +
-        ' - ' +
-        prod.quantity +
-        ' x ' +
-        '$' +
-        prod.product.price
+      const pdfDoc = new PDFDocument();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        'inline; filename="' + invoiceName + '"'
       );
-    });
-    pdfDoc.text('-----');
-    pdfDoc.fontSize(20).text('Total Price: $' + totalprice);
+      pdfDoc.pipe(fs.createWriteStream(invoicePath));
+      pdfDoc.pipe(res);
 
-    pdfDoc.end();
-    // fs.readFile(invoicePath, (err, data) => {
-    //   if (err) {
-    //     return next(err);
-    //   }
-    //   res.setHeader('Content-Type', 'application/pdf');
-    //   res.setHeader('Content-Disposition', 'attachment; filename="' + invoiceName + '"');
-    //   res.send(data);
-    // });
-    // const file = fs.createReadStream(invoicePath);
-    // file.pipe(res);
-  }).catch(err => next(err));
-};
+      pdfDoc.fontSize(26).text('Invoice', {
+        underline: true
+      });
+      pdfDoc.text('-----------------------');
+      let totalPrice = 0;
+      order.products.forEach(prod => {
+        totalPrice += prod.quantity * prod.product.price;
+        pdfDoc
+          .fontSize(14)
+          .text(
+            prod.product.title +
+              ' - ' +
+              prod.quantity +
+              ' x ' +
+              '$' +
+              prod.product.price
+          );
+      });
+      pdfDoc.text('---');
+      pdfDoc.fontSize(20).text('Total Price: $' + totalPrice);
 
-exports.getCheckout = (req, res, next) => {
-  req.user
-    .populate('cart.items.productId')
-    .execPopulate()
-    .then(user => {
-      const products = user.cart.items;
-      let total = 0;
-      products.forEach(p => {
-        total += p.quantity * p.productId.price
-      });
-      res.render('shop/checkout', {
-        path: '/checkout',
-        pageTitle: 'Checkout',
-        products: products,
-        totalSum: total,
-      });
+      pdfDoc.end();
+      // fs.readFile(invoicePath, (err, data) => {
+      //   if (err) {
+      //     return next(err);
+      //   }
+      //   res.setHeader('Content-Type', 'application/pdf');
+      //   res.setHeader(
+      //     'Content-Disposition',
+      //     'inline; filename="' + invoiceName + '"'
+      //   );
+      //   res.send(data);
+      // });
+      // const file = fs.createReadStream(invoicePath);
+
+      // file.pipe(res);
     })
-    .catch(err => errorHandlerObjectWrapper(500, err, next));
-}
+    .catch(err => next(err));
+};

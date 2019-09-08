@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
+
 const fileHelper = require('../util/file');
 
 const { validationResult } = require('express-validator/check');
-const errorHandlerObjectWrapper = require('../util/errorHandlerObjectWrapper');
 
 const Product = require('../models/product');
 
@@ -13,7 +13,7 @@ exports.getAddProduct = (req, res, next) => {
     editing: false,
     hasError: false,
     errorMessage: null,
-    validationErrors: [],
+    validationErrors: []
   });
 };
 
@@ -31,10 +31,10 @@ exports.postAddProduct = (req, res, next) => {
       product: {
         title: title,
         price: price,
-        description: description,
+        description: description
       },
       errorMessage: 'Attached file is not an image.',
-      validationErrors: [],
+      validationErrors: []
     });
   }
   const errors = validationResult(req);
@@ -48,22 +48,22 @@ exports.postAddProduct = (req, res, next) => {
       hasError: true,
       product: {
         title: title,
-        imageUrl: imageUrl,
         price: price,
-        description: description,
+        description: description
       },
       errorMessage: errors.array()[0].msg,
-      validationErrors: errors.array(),
+      validationErrors: errors.array()
     });
   }
 
   const imageUrl = image.path;
 
   const product = new Product({
+    // _id: new mongoose.Types.ObjectId('5badf72403fd8b5be0366e81'),
     title: title,
     price: price,
     description: description,
-    imageUrl,
+    imageUrl: imageUrl,
     userId: req.user
   });
   product
@@ -113,10 +113,14 @@ exports.getEditProduct = (req, res, next) => {
         product: product,
         hasError: false,
         errorMessage: null,
-        validationErrors: [],
+        validationErrors: []
       });
     })
-    .catch(err => errorHandlerObjectWrapper(500, err));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.postEditProduct = (req, res, next) => {
@@ -138,10 +142,10 @@ exports.postEditProduct = (req, res, next) => {
         title: updatedTitle,
         price: updatedPrice,
         description: updatedDesc,
-        _id: prodId,
+        _id: prodId
       },
       errorMessage: errors.array()[0].msg,
-      validationErrors: errors.array(),
+      validationErrors: errors.array()
     });
   }
 
@@ -162,7 +166,11 @@ exports.postEditProduct = (req, res, next) => {
         res.redirect('/admin/products');
       });
     })
-    .catch(err => errorHandlerObjectWrapper(500, err));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.getProducts = (req, res, next) => {
@@ -177,23 +185,28 @@ exports.getProducts = (req, res, next) => {
         path: '/admin/products'
       });
     })
-    .catch(err => errorHandlerObjectWrapper(500, err));
+    .catch(err => {
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
+    });
 };
 
 exports.deleteProduct = (req, res, next) => {
   const prodId = req.params.productId;
-  Product.findById(prodId).then(product => {
-    if (!product) {
-      next(new Error('Product not found!'));
-    }
-    fileHelper.deleteFile(product.imageUrl);
-    Product.deleteOne({ _id: prodId, userId: req.user._id });
-  })
-  .then(() => {
-    console.log('DESTROYED PRODUCT');
-    res.status(200).json({ message: 'Success!' });
-  })
-  .catch(err => {
-    res.status(500).json({ message: 'Deleting product failed.' });
-  });
+  Product.findById(prodId)
+    .then(product => {
+      if (!product) {
+        return next(new Error('Product not found.'));
+      }
+      fileHelper.deleteFile(product.imageUrl);
+      return Product.deleteOne({ _id: prodId, userId: req.user._id });
+    })
+    .then(() => {
+      console.log('DESTROYED PRODUCT');
+      res.status(200).json({ message: 'Success!' });
+    })
+    .catch(err => {
+      res.status(500).json({ message: 'Deleting product failed.' });
+    });
 };

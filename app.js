@@ -1,6 +1,8 @@
 const path = require('path');
-
+const fs = require('fs');
+const https = require('https');
 const dotenv = require('dotenv');
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -9,17 +11,20 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 const csrf = require('csurf');
 const flash = require('connect-flash');
 const multer = require('multer');
+const helmet = require('helmet');
+const compression = require('compression');
+const morgan = require('morgan');
 
 const errorController = require('./controllers/error');
-const errorHandlerObjectWrapper = require('./util/errorHandlerObjectWrapper');
-
+const shopController = require('./controllers/shop');
+const isAuth = require('./middleware/is-auth');
 const User = require('./models/user');
 
 dotenv.config();
-const envvars = process.env;
+console.log(process.env.NODE_ENV);
 
 const MONGODB_URI =
-  `mongodb://${envvars.DB_USER}:${envvars.DB_PASSWORD}@${envvars.DB_HOST}:${envvars.DB_PORT}/${envvars.DB_NAME}`;
+  `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_DEFAULT_DATABASE}`;
 
 const app = express();
 const store = new MongoDBStore({
@@ -28,13 +33,16 @@ const store = new MongoDBStore({
 });
 const csrfProtection = csrf();
 
+// const privateKey = fs.readFileSync(process.env.SSH_PRIVATE_FILE);
+// const certificate = fs.readFileSync(process.env.SSH_CERTIFICATE);
+
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'images');
   },
   filename: (req, file, cb) => {
     cb(null, new Date().toISOString() + '-' + file.originalname);
-  },
+  }
 });
 
 const fileFilter = (req, file, cb) => {
@@ -44,9 +52,10 @@ const fileFilter = (req, file, cb) => {
     file.mimetype === 'image/jpeg'
   ) {
     cb(null, true);
+  } else {
+    cb(null, false);
   }
-  cb(null, false);
-}
+};
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
@@ -55,8 +64,19 @@ const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
 
+const accessLogStream = fs.createWriteStream(
+  path.join(__dirname, 'log', 'access.log'),
+  { flags: 'a' }
+);
+
+app.use(helmet());
+app.use(compression());
+app.use(morgan('combined', { stream: accessLogStream }));
+
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(multer({ storage: fileStorage, fileFilter }).single('image'));
+app.use(
+  multer({ storage: fileStorage, fileFilter: fileFilter }).single('image')
+);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use(
@@ -67,10 +87,16 @@ app.use(
     store: store
   })
 );
-app.use(csrfProtection);
+
 app.use(flash());
 
 app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.session.isLoggedIn;
+  next();
+});
+
+app.use((req, res, next) => {
+  // throw new Error('Sync Dummy');
   if (!req.session.user) {
     return next();
   }
@@ -83,12 +109,14 @@ app.use((req, res, next) => {
       next();
     })
     .catch(err => {
-      next(errorHandlerObjectWrapper(500, err));
+      next(new Error(err));
     });
 });
 
+app.post('/create-order', isAuth, shopController.postOrder);
+
+app.use(csrfProtection);
 app.use((req, res, next) => {
-  res.locals.isAuthenticated = req.session.isLoggedIn;
   res.locals.csrfToken = req.csrfToken();
   next();
 });
@@ -102,14 +130,25 @@ app.get('/500', errorController.get500);
 app.use(errorController.get404);
 
 app.use((error, req, res, next) => {
-  // res.render(error.httpStatusCode).render(...);
-  res.redirect('/500');
+  // res.status(error.httpStatusCode).render(...);
+  // res.redirect('/500');
+  res.status(500).render('500', {
+    pageTitle: 'Error!',
+    path: '/500',
+    isAuthenticated: req.session.isLoggedIn
+  });
 });
 
 mongoose
   .connect(MONGODB_URI)
   .then(result => {
-    app.listen(3000);
+    /* SSH way
+    https.createServer({
+      key: privateKey,
+      cert: certificate,
+    }, app).listen(process.env.PORT || 3000);
+    */
+    app.listen(process.env.PORT || 3000);
   })
   .catch(err => {
     console.log(err);
