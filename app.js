@@ -26,6 +26,5 @@ if (buttonElement) {
         strResults.push(stringResult);
         console.log(numResults, strResults);
         printResult({ val: result, timestamp: new Date() });
-        //console.log(add(true, false));
     });
 }
