@@ -44,3 +44,13 @@ if (buttonElement) {
     printResult({ val: result as number, timestamp: new Date() });
   });
 }
+
+const myPromise = new Promise((res, rej) => {
+  setTimeout(() => {
+    res('It worked!');
+  }, 1000);
+});
+
+myPromise.then((result => {
+  console.log(result.split('w'))
+}))
