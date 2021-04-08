@@ -6,9 +6,11 @@ function add(num1: number, num2: number) {
   return num1 + num2;
 }
 
-buttonElement.addEventListener('click', () => {
-  const num1 = num1Element.value;
-  const num2 = num2Element.value;
-  const result = add(+num1, +num2);
-  console.log(result)
-});
+if (buttonElement) {
+  buttonElement.addEventListener('click', () => {
+    const num1 = num1Element.value;
+    const num2 = num2Element.value;
+    const result = add(+num1, +num2);
+    console.log(result)
+  });
+}
